@@ -31,6 +31,7 @@
     "react-papaparse": "^4.1.0"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^6.0.4",
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@electron/notarize": "^1.2.3",
     "@types/node": "16.18.11",
