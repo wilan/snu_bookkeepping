@@ -10,6 +10,7 @@ import {
   EFILE_SUCCESS,
   getNewClientObject,
 } from './types';
+import { getCsv } from './utilities';
 
 const getGenericStringColumn = (
   header: string,
@@ -218,13 +219,7 @@ const useCsvHandler = () => {
   };
 
   const updateCsv = (clients: ClientsObject, config: ConfigObject) => {
-    const rows: string[][] = [];
-    const serializedConfigs = CsvConfigs.filter((x) => x.serialize);
-    rows.push(serializedConfigs.map((x) => x.header));
-    clients.forEach((client) => {
-      rows.push(serializedConfigs.map((x) => (x.serialize ? x.serialize(client) : '')));
-    });
-    window.api.writeFile(config.dataCsv, jsonToCSV(rows));
+    window.api.writeFile(config.dataCsv, getCsv(clients));
   };
   return { getClientsObjectFromCSV, clientsObject, updateCsv, parseError };
 };

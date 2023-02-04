@@ -9,6 +9,7 @@ import {
   getNewClientObject,
 } from './types';
 import { CsvConfigs } from './useCsvHandler';
+import { jsonToCSV } from 'react-papaparse';
 
 const CONFIG_KEY = 'config';
 
@@ -125,4 +126,14 @@ export const validate = (c1: ClientObject) => {
       (column) => !column.validate || (column.serialize && column.validate(column.serialize(c1))),
     )
   );
+};
+
+export const getCsv = (clients: ClientsObject) => {
+  const rows: string[][] = [];
+  const serializedConfigs = CsvConfigs.filter((x) => x.serialize);
+  rows.push(serializedConfigs.map((x) => x.header));
+  clients.forEach((client) => {
+    rows.push(serializedConfigs.map((x) => (x.serialize ? x.serialize(client) : '')));
+  });
+  return jsonToCSV(rows);
 };

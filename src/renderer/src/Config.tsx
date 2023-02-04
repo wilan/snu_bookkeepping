@@ -1,13 +1,23 @@
 import { ConfigObject, DataSources } from './types';
+import { getCsv } from './utilities';
 
 const INPUT_WIDTH = '350px';
 
 const Config = ({ datasources, reload }: { datasources: DataSources; reload: () => void }) => {
-  const { config, setConfig } = datasources;
+  const { config, setConfig, clients } = datasources;
 
   const setConfigWithLambda = (lambda: (cf: ConfigObject) => void) => {
     lambda(config);
     setConfig(config);
+  };
+
+  const downloadData = () => {
+    const blob = new Blob([getCsv(clients)], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `client_backup_${Date.now()}.csv`;
+    a.click();
   };
   return (
     <>
@@ -65,6 +75,7 @@ const Config = ({ datasources, reload }: { datasources: DataSources; reload: () 
       </div>
       <div>
         <button onClick={reload}>Reload and Validate</button>
+        <button onClick={downloadData}>Download Backup</button>
       </div>
     </>
   );
