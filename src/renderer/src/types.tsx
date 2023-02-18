@@ -15,6 +15,10 @@ export interface DataSources {
 export const EFILE_UNKNOWN = '';
 export const EFILE_MISSING = '0';
 export const EFILE_SUCCESS = '1';
+export const STATE_INCLUDED = 'TRUE';
+export const STATE_EXCLUDED = 'FALSE';
+export const YES = 'Yes';
+export const NO = 'No';
 
 export interface ClientObject {
   /*
@@ -27,12 +31,21 @@ export interface ClientObject {
   lastname: string;
   firstname: string;
   ssn4: string;
+  spouseSsn4: string;
   payment: string;
   notes: string;
   efileStatus: string;
   date: string;
   filename: string;
   scanFilenames: string;
+  stateNY: boolean;
+  stateNJ: boolean;
+  statePA: boolean;
+  otherStates: string;
+  phone: string;
+  eic: boolean;
+  preparer: string;
+  missingDocs: boolean;
   meta?: {
     clientInode: number;
     scanInodes: [number, string][];
@@ -40,18 +53,35 @@ export interface ClientObject {
     ignore?: boolean;
   };
 }
-
+/*
+SSN - Spouse,"EIC with 
+Children?","Missing 
+Documents?",Preparer,"State Filed - 
+NY","State Filed - 
+NJ","State Filed - 
+PA","Other 
+States","Telephone 
+Number",Fee,Comments,,*/
 export const getNewClientObject = (): ClientObject => {
   return {
     date: '',
     lastname: '',
     firstname: '',
     ssn4: '',
+    spouseSsn4: '',
     payment: '',
     notes: '',
     efileStatus: EFILE_UNKNOWN,
     filename: '',
     scanFilenames: '',
+    stateNY: false,
+    stateNJ: false,
+    statePA: false,
+    otherStates: '',
+    phone: '',
+    eic: false,
+    preparer: '',
+    missingDocs: false,
   };
 };
 

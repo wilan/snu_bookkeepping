@@ -4,6 +4,7 @@ import { CLIENT_SORT_FN, updateClientsFromFiles, validate } from './utilities';
 import { CsvConfigs } from './useCsvHandler';
 
 const UPDATE_INTERVAL_SEC = 10;
+const LIMIT = 20;
 
 const TrackClients = ({
   datasources,
@@ -16,6 +17,7 @@ const TrackClients = ({
 }) => {
   const { config, clients, updateClients } = datasources;
   const [hideValid, setHideValid] = useState(false);
+  const [shouldLimit, setShouldLimit] = useState(true);
   const [searchStr, setSearchStr] = useState('');
   const displayClients = useMemo(() => {
     const filter = (client: ClientObject) => {
@@ -27,8 +29,11 @@ const TrackClients = ({
         : true;
       return searchFilter && validFilter;
     };
-    return clients.sort(CLIENT_SORT_FN).filter(filter);
-  }, [clients, hideValid, searchStr]);
+    return Array.from(clients)
+      .sort(CLIENT_SORT_FN)
+      .filter(filter)
+      .slice(0, shouldLimit ? LIMIT : 1000);
+  }, [clients, hideValid, searchStr, shouldLimit]);
   useEffect(() => {
     const interval = setInterval(() => {
       const hasChanges = updateClientsFromFiles(clients, config);
@@ -57,6 +62,12 @@ const TrackClients = ({
         />
         Hide Valid/Ignored:{' '}
         <input type="checkbox" checked={hideValid} onChange={() => setHideValid(!hideValid)} />
+        Show All:{' '}
+        <input
+          type="checkbox"
+          checked={!shouldLimit}
+          onChange={() => setShouldLimit(!shouldLimit)}
+        />
       </div>
       <table className="client-table" style={{ width: '100%' }}>
         <thead>

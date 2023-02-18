@@ -99,6 +99,20 @@ const ScanDocumentModal = ({
     }
   };
 
+  const getInitialModifiedFilename = () => {
+    const suffix = (new Date().getFullYear() - 1) % 10;
+    if (!client.lastname || !client.ssn4) {
+      console.log(client);
+      return null;
+    }
+    const tokens = [
+      client.lastname,
+      client.ssn4 + suffix,
+      client.spouseSsn4 ? client.spouseSsn4 + suffix : null,
+    ].filter(Boolean);
+    return tokens.join(' ');
+  };
+
   return (
     <Modal isOpen={true} onRequestClose={() => setShowModal(false)} ariaHideApp={false}>
       <h2>Filenames text value:</h2>
@@ -129,7 +143,7 @@ const ScanDocumentModal = ({
         <div key={inode}>
           <input type="checkbox" checked={true} onChange={() => edit(inode, false)} />
           <EditableInput
-            initialValue={getFilename(inode)}
+            initialValue={getInitialModifiedFilename() || getFilename(inode)}
             editCallback={(newName) => renameFileCallback(scanMap[inode], newName)}
             disabled={!scanMap[inode]}
           >
@@ -144,7 +158,7 @@ const ScanDocumentModal = ({
             <div key={scanFile.inode}>
               <input type="checkbox" checked={false} onChange={() => edit(scanFile.inode, true)} />
               <EditableInput
-                initialValue={scanFile.filename}
+                initialValue={getInitialModifiedFilename() || scanFile.filename}
                 editCallback={(newName) => renameFileCallback(scanFile, newName)}
               >
                 <ClickableScanFile filename={scanFile.filename} config={config} />

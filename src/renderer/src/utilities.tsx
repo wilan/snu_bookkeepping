@@ -111,8 +111,11 @@ export const updateClientsFromFiles = (clients: ClientsObject, config: ConfigObj
   return hasChanges;
 };
 
-export const CLIENT_SORT_FN: (c1: ClientObject, c2: ClientObject) => number = (c1, c2) =>
-  (c2.meta?.createTime || 0) - (c1.meta?.createTime || 0);
+export const CLIENT_SORT_FN: (c1: ClientObject, c2: ClientObject) => number = (c1, c2) => {
+  const metaCmp = (c2.meta?.createTime || 0) - (c1.meta?.createTime || 0);
+  const dateCmp = c2.date.localeCompare(c1.date);
+  return metaCmp || dateCmp;
+};
 
 export const scanFilesToString = (filenames: string[]) => {
   return filenames.join('\n');

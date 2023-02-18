@@ -8,9 +8,13 @@ import {
   DataColumnConfig,
   EFILE_MISSING,
   EFILE_SUCCESS,
+  NO,
+  YES,
   getNewClientObject,
 } from './types';
 import { getCsv } from './utilities';
+import { STATE_INCLUDED } from './types';
+import { STATE_EXCLUDED } from './types';
 
 const getGenericStringColumn = (
   header: string,
@@ -62,6 +66,37 @@ const getGenericStringColumn = (
   return config;
 };
 
+const getGenericTrueFalseColumn = (
+  header: string,
+  trueString: string,
+  falseString: string,
+  getter: (client: ClientObject) => boolean,
+  setter: (client: ClientObject, value: boolean) => void,
+  required: false,
+): DataColumnConfig => {
+  const ret: DataColumnConfig = {
+    header: header,
+    parse: (client: ClientObject, cell?: string) => {
+      setter(client, cell === trueString);
+    },
+    serialize: (client: ClientObject) => (getter(client) ? trueString : falseString),
+    render: (client, datasources) => (
+      <input
+        type="checkbox"
+        checked={getter(client)}
+        onChange={() => {
+          setter(client, !getter(client));
+          datasources.updateClients(datasources.clients);
+        }}
+      />
+    ),
+  };
+  if (required) {
+    ret.validate = (cell) => cell === trueString;
+  }
+  return ret;
+};
+
 export const CsvConfigs: DataColumnConfig[] = [
   {
     header: 'Ignore Client',
@@ -85,7 +120,110 @@ export const CsvConfigs: DataColumnConfig[] = [
     (client, value) => (client.date = value || ''),
     false,
   ),
-  //file:///C:/Users/william/Desktop/Test/data.csv
+  getGenericStringColumn(
+    'Last Name',
+    (client) => client.lastname,
+    (client, value) => (client.lastname = value || ''),
+    true,
+  ),
+  getGenericStringColumn(
+    'First Name',
+    (client) => client.firstname,
+    (client, value) => (client.firstname = value || ''),
+    true,
+  ),
+  getGenericStringColumn(
+    'SSN - Taxpayer',
+    (client) => client.ssn4,
+    (client, value) => (client.ssn4 = value || ''),
+    true,
+  ),
+  getGenericStringColumn(
+    'SSN - Spouse',
+    (client) => client.spouseSsn4,
+    (client, value) => (client.spouseSsn4 = value || ''),
+    true,
+    false,
+    false,
+  ),
+  getGenericTrueFalseColumn(
+    'EIC with Children?',
+    YES,
+    NO,
+    (client) => client.eic,
+    (client, value) => (client.eic = value),
+    false,
+  ),
+  getGenericTrueFalseColumn(
+    'Missing Documents?',
+    YES,
+    NO,
+    (client) => client.missingDocs,
+    (client, value) => (client.missingDocs = value),
+    false,
+  ),
+  getGenericStringColumn(
+    'Preparer',
+    (client) => client.preparer,
+    (client, value) => (client.preparer = value || ''),
+    true,
+    false,
+    true,
+  ),
+  getGenericTrueFalseColumn(
+    'State Filed - NY',
+    STATE_INCLUDED,
+    STATE_EXCLUDED,
+    (client) => client.stateNY,
+    (client, value) => (client.stateNY = value),
+    false,
+  ),
+  getGenericTrueFalseColumn(
+    'State Filed - NJ',
+    STATE_INCLUDED,
+    STATE_EXCLUDED,
+    (client) => client.stateNJ,
+    (client, value) => (client.stateNJ = value),
+    false,
+  ),
+  getGenericTrueFalseColumn(
+    'State Filed - PA',
+    STATE_INCLUDED,
+    STATE_EXCLUDED,
+    (client) => client.statePA,
+    (client, value) => (client.statePA = value),
+    false,
+  ),
+  getGenericStringColumn(
+    'Other States',
+    (client) => client.otherStates,
+    (client, value) => (client.otherStates = value || ''),
+    true,
+    false,
+    false,
+  ),
+  getGenericStringColumn(
+    'Telephone Number',
+    (client) => client.phone,
+    (client, value) => (client.phone = value || ''),
+    true,
+    false,
+    false,
+  ),
+  getGenericStringColumn(
+    'Fee',
+    (client) => client.payment,
+    (client, value) => (client.payment = value || ''),
+    true,
+  ),
+  getGenericStringColumn(
+    'Comments',
+    (client) => client.notes,
+    (client, value) => (client.notes = value || ''),
+    true,
+    true,
+    false,
+  ),
   {
     header: 'Filename',
     parse: (client: ClientObject, cell?: string) => (client.filename = cell || ''),
@@ -104,38 +242,6 @@ export const CsvConfigs: DataColumnConfig[] = [
       );
     },
   },
-  getGenericStringColumn(
-    'Last Name',
-    (client) => client.lastname,
-    (client, value) => (client.lastname = value || ''),
-    true,
-  ),
-  getGenericStringColumn(
-    'First Name',
-    (client) => client.firstname,
-    (client, value) => (client.firstname = value || ''),
-    true,
-  ),
-  getGenericStringColumn(
-    'Last 4 SSN',
-    (client) => client.ssn4,
-    (client, value) => (client.ssn4 = value || ''),
-    true,
-  ),
-  getGenericStringColumn(
-    'Payment',
-    (client) => client.payment,
-    (client, value) => (client.payment = value || ''),
-    true,
-  ),
-  getGenericStringColumn(
-    'Notes',
-    (client) => client.notes,
-    (client, value) => (client.notes = value || ''),
-    true,
-    true,
-    false,
-  ),
   {
     header: 'Scanned Documents',
     parse: (client: ClientObject, cell?: string) => (client.scanFilenames = cell || ''),
@@ -180,7 +286,7 @@ const EXPECTED_HEADER = CsvConfigs.map((x) => Boolean(x.serialize) && x.header).
 );
 
 const useCsvHandler = () => {
-  const { readString, jsonToCSV } = usePapaParse();
+  const { readString } = usePapaParse();
   const [clientsObject, setClientsObject] = useState<ClientsObject | null>(null);
   const [parseError, setParseError] = useState('');
 
@@ -189,7 +295,10 @@ const useCsvHandler = () => {
     readString(rawCsv, {
       worker: true,
       complete: (results) => {
-        if (EXPECTED_HEADER.join(',') !== (results.data[0] as string[]).join(',')) {
+        if (
+          EXPECTED_HEADER.join(',') !==
+          (results.data[0] as string[]).join(',').replaceAll('\r', '').replaceAll('\n', '')
+        ) {
           setParseError(`Headers do not match, please set to ${EXPECTED_HEADER}`);
           return;
         }
